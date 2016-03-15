@@ -144,60 +144,6 @@ static int __raw_remote_dek_spin_owner(raw_remote_spinlock_t *lock)
 }
 /* end dekkers implementation ----------------------------------------------- */
 
-#ifndef CONFIG_THUMB2_KERNEL
-/* swp implementation ------------------------------------------------------- */
-static void __raw_remote_swp_spin_lock(raw_remote_spinlock_t *lock)
-{
-	unsigned long tmp;
-
-	__asm__ __volatile__(
-"1:     swp     %0, %2, [%1]\n"
-"       teq     %0, #0\n"
-"       bne     1b"
-	: "=&r" (tmp)
-	: "r" (&lock->lock), "r" (1)
-	: "cc");
-
-	smp_mb();
-}
-
-static int __raw_remote_swp_spin_trylock(raw_remote_spinlock_t *lock)
-{
-	unsigned long tmp;
-
-	__asm__ __volatile__(
-"       swp     %0, %2, [%1]\n"
-	: "=&r" (tmp)
-	: "r" (&lock->lock), "r" (1)
-	: "cc");
-
-	if (tmp == 0) {
-		smp_mb();
-		return 1;
-	}
-	return 0;
-}
-
-static void __raw_remote_swp_spin_unlock(raw_remote_spinlock_t *lock)
-{
-	int lock_owner;
-
-	smp_mb();
-	lock_owner = readl_relaxed(&lock->lock);
-	if (lock_owner != SPINLOCK_PID_APPS) {
-		pr_err("%s: spinlock not owned by Apps (actual owner is %d)\n",
-				__func__, lock_owner);
-	}
-
-	__asm__ __volatile__(
-"       str     %1, [%0]"
-	:
-	: "r" (&lock->lock), "r" (0)
-	: "cc");
-}
-/* end swp implementation --------------------------------------------------- */
-#endif
-
 /* ldrex implementation ----------------------------------------------------- */
 static char *ldrex_compatible_string = "qcom,ipc-spinlock-ldrex";
 
@@ -434,16 +380,6 @@ static void initialize_ops(void)
 		current_ops.owner = __raw_remote_dek_spin_owner;
 		is_hw_lock_type = 0;
 		break;
-#ifndef CONFIG_THUMB2_KERNEL
-	case SWP_MODE:
-		current_ops.lock = __raw_remote_swp_spin_lock;
-		current_ops.unlock = __raw_remote_swp_spin_unlock;
-		current_ops.trylock = __raw_remote_swp_spin_trylock;
-		current_ops.release = __raw_remote_gen_spin_release;
-		current_ops.owner = __raw_remote_gen_spin_owner;
-		is_hw_lock_type = 0;
-		break;
-#endif
 	case LDREX_MODE:
 		current_ops.lock = __raw_remote_ex_spin_lock;
 		current_ops.unlock = __raw_remote_ex_spin_unlock;
