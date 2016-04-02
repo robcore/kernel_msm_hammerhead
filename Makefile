@@ -244,9 +244,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else echo sh; fi ; fi)
 
 HOSTCC       = $(CCACHE) gcc
-HOSTCXX      = $(CCACHE) g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer -fgcse-las -fgraphite -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
-HOSTCXXFLAGS = -Ofast -fgcse-las -fgraphite -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
+HOSTCXX      = $(CCACHE) ++
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
+HOSTCXXFLAGS = -O2
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -330,8 +330,8 @@ include $(srctree)/scripts/Kbuild.include
 
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-CC		= $(CCACHE) $(CROSS_COMPILE)gcc -fgraphite -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
-CPP		= $(CC) -E -fgraphite -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
+CC		= $(CCACHE) $(CROSS_COMPILE)gcc
+CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
 STRIP		= $(CROSS_COMPILE)strip
@@ -347,21 +347,12 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-KERNELFLAGS	= -Ofast -munaligned-access -fgcse-lm -fgcse-sm -fsched-spec-load \
-		  -fforce-addr -fsingle-precision-constant \
-		  -mcpu=cortex-a15 -mtune=cortex-a15 -marm -mfpu=neon-vfpv4 \
-		  -ftree-vectorize -mvectorize-with-neon-quad \
-		  -fgraphite -floop-flatten -floop-parallelize-all \
-		  -ftree-loop-linear -floop-interchange -floop-strip-mine \
-		  -floop-block -fgcse-las -fpredictive-commoning
-MODFLAGS	= -DMODULE $(KERNELFLAGS)
-CFLAGS_MODULE   = $(MODFLAGS)
-AFLAGS_MODULE   = $(MODFLAGS)
-LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
-CFLAGS_KERNEL	= $(KERNELFLAGS)
-AFLAGS_KERNEL	= $(KERNELFLAGS)
+CFLAGS_MODULE   =
+AFLAGS_MODULE   =
+LDFLAGS_MODULE  =
+CFLAGS_KERNEL	=
+AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
-
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
@@ -376,8 +367,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks \
-		   -pipe
+		   -fno-delete-null-pointer-checks
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
@@ -570,7 +560,7 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
 else
-KBUILD_CFLAGS	+= -Ofast -fgraphite -floop-flatten -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block $(call cc-disable-warning,maybe-uninitialized,)
+KBUILD_CFLAGS	+= -O2 $(call cc-disable-warning,maybe-uninitialized,)
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
