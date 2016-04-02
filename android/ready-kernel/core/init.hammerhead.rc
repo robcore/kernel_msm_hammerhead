@@ -15,8 +15,9 @@
 #
 
 import init.hammerhead.usb.rc
+import init.hammerhead_svelte.rc
 import init.hammerhead.diag.rc
-import init.hammerhead.power.rc
+import init.hammerhead_fp.rc
 
 on early-init
     mount debugfs debugfs /sys/kernel/debug
@@ -52,11 +53,11 @@ on boot
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/lpm
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
 
-    # bluetooth UART dev
+    #bluetooth UART dev
     chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
     chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
 
-    # Create QMUX deamon socket area
+    #Create QMUX deamon socket area
     mkdir /dev/socket/qmux_radio 0770 radio radio
     chmod 2770 /dev/socket/qmux_radio
     mkdir /dev/socket/qmux_audio 0770 media audio
@@ -74,7 +75,7 @@ on boot
     # Allow QMUX daemon to assign port open wait time
     chown radio radio /sys/devices/virtual/hsicctl/hsicctl0/modem_wait
 
-    # For bridgemgr daemon to inform the USB driver of the correct transport
+    #For bridgemgr daemon to inform the USB driver of the correct transport
     chown radio radio /sys/class/android_usb/f_rmnet_smd_sdio/transport
 
     # Assign TCP buffer thresholds to be ceiling value of technology maximums
@@ -422,10 +423,10 @@ service bugreport /system/bin/dumpstate -d -p -B \
     keycodes 114 115 116
 
 service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
-   class main
-   user root
-   group root system
-   disabled
+    class main
+    user root
+    group root system
+    disabled
 
 service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     class main
@@ -434,9 +435,9 @@ service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     disabled
 
 service thermal-engine /system/bin/thermal-engine-hh
-   class main
-   user root
-   group radio system
+    class main
+    user root
+    group radio system
 
 service vss_init /vendor/bin/vss_init
     class late_start

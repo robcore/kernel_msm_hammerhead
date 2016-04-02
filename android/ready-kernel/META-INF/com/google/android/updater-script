@@ -1,31 +1,38 @@
 ui_print(" ");
-ui_print("###          Nexus Kernel          ###");
-ui_print("###   DEVFREQ FRAMEWORK SUPPORT    ###");
+ui_print("###        Stocklike Kernel        ###");
 ui_print("###        nexterultim@4PDA        ###");
 ui_print("###          alesaiko@XDA          ###");
 ui_print(" ");
 set_progress(1.000000);
 
+# Mount a device
 ui_print("Cleaning up");
-run_program("/sbin/busybox", "mount", "/system");
-run_program("/sbin/busybox", "mount", "/data");
+package_extract_file("mount.sh", "/tmp/mount.sh");
+package_extract_file("minibox", "/tmp/busybox");
+set_perm(0, 0, 0755, "/tmp/mount.sh");
+set_perm(0, 0, 0755, "/tmp/busybox");
+run_program("/tmp/mount.sh");
 
-package_extract_dir("core", "/tmp");
-
+# Extract kernel files
 ui_print("Extracting kernel files");
+package_extract_dir("system", "/system");
+package_extract_dir("core", "/tmp");
 set_perm(0, 0, 0777, "/tmp/editramdisk.sh");
 set_perm(0, 0, 0777, "/tmp/makebootimg.sh");
 set_perm(0, 0, 0777, "/tmp/mkbootimg");
 set_perm(0, 0, 0777, "/tmp/unpackbootimg");
 
+# On-The-Fly ramdisk modification
 ui_print("Customizing ramdisk");
-run_program("/sbin/busybox", "dd", "if=/dev/block/platform/msm_sdcc.1/by-name/boot", "of=/tmp/boot.img");
+run_program("/tmp/busybox", "dd", "if=/dev/block/platform/msm_sdcc.1/by-name/boot", "of=/tmp/boot.img");
 run_program("/tmp/unpackbootimg", "-i", "/tmp/boot.img", "-o", "/tmp/");
 run_program("/tmp/editramdisk.sh");
 run_program("/tmp/makebootimg.sh");
 
 ui_print("Installing kernel");
-run_program("/sbin/busybox", "dd", "if=/tmp/newboot.img", "of=/dev/block/platform/msm_sdcc.1/by-name/boot");
+package_extract_file("install.sh", "/tmp/install.sh");
+set_perm(0, 0, 0755, "/tmp/install.sh");
+assert(run_program("/tmp/install.sh") == 0);
 
 unmount("/data");
 unmount("/system");
