@@ -47,15 +47,20 @@
 #include <linux/fastchg.h>
 
 int current_charge_level;
-
 int force_fast_charge;
-static ssize_t force_fast_charge_show(struct kobject *kobj, struct kobj_attribute *attr,
+int ac_charge_level;
+int usb_charge_level;
+int failsafe;
+
+static ssize_t
+force_fast_charge_show(struct kobject *kobj, struct kobj_attribute *attr,
 					char *buf)
 {
 	return sprintf(buf, "%d\n", force_fast_charge);
 }
 
-static ssize_t force_fast_charge_store(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+force_fast_charge_store(struct kobject *kobj, struct kobj_attribute *attr,
 					const char *buf, size_t count)
 {
 
@@ -77,14 +82,16 @@ static ssize_t force_fast_charge_store(struct kobject *kobj, struct kobj_attribu
 static struct kobj_attribute force_fast_charge_attribute =
 __ATTR(force_fast_charge, 0666, force_fast_charge_show, force_fast_charge_store);
 
-int ac_charge_level;
-static ssize_t ac_charge_level_show(struct kobject *kobj, struct kobj_attribute *attr,
+
+static ssize_t
+ac_charge_level_show(struct kobject *kobj, struct kobj_attribute *attr,
 					char *buf)
 {
 	return sprintf(buf, "%d\n", ac_charge_level);
 }
 
-static ssize_t ac_charge_level_store(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+ac_charge_level_store(struct kobject *kobj, struct kobj_attribute *attr,
 					const char *buf, size_t count)
 {
 
@@ -123,14 +130,15 @@ static ssize_t ac_charge_level_store(struct kobject *kobj, struct kobj_attribute
 static struct kobj_attribute ac_charge_level_attribute =
 __ATTR(ac_charge_level, 0666, ac_charge_level_show, ac_charge_level_store);
 
-int usb_charge_level;
-static ssize_t usb_charge_level_show(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+usb_charge_level_show(struct kobject *kobj, struct kobj_attribute *attr,
 					char *buf)
 {
 	return sprintf(buf, "%d\n", usb_charge_level);
 }
 
-static ssize_t usb_charge_level_store(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+usb_charge_level_store(struct kobject *kobj, struct kobj_attribute *attr,
 					const char *buf, size_t count)
 {
 
@@ -142,8 +150,7 @@ static ssize_t usb_charge_level_store(struct kobject *kobj, struct kobj_attribut
 		&& new_usb_charge_level >= MIN_CHARGE_LEVEL) {
 		usb_charge_level = new_usb_charge_level;
 		return count;
-	}
-	else {
+	} else {
 		switch (new_usb_charge_level) {
 			case USB_CHARGE_500:
 			case USB_CHARGE_600:
@@ -164,17 +171,17 @@ static ssize_t usb_charge_level_store(struct kobject *kobj, struct kobj_attribut
 static struct kobj_attribute usb_charge_level_attribute =
 __ATTR(usb_charge_level, 0666, usb_charge_level_show, usb_charge_level_store);
 
-int failsafe;
-static ssize_t failsafe_show(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+failsafe_show(struct kobject *kobj, struct kobj_attribute *attr,
 				char *buf)
 {
 	return sprintf(buf, "%d\n", failsafe);
 }
 
-static ssize_t failsafe_store(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+failsafe_store(struct kobject *kobj, struct kobj_attribute *attr,
 				const char *buf, size_t count)
 {
-
 	int new_failsafe;
 
 	sscanf(buf, "%du", &new_failsafe);
@@ -196,7 +203,8 @@ static ssize_t failsafe_store(struct kobject *kobj, struct kobj_attribute *attr,
 static struct kobj_attribute failsafe_attribute =
 __ATTR(failsafe, 0666, failsafe_show, failsafe_store);
 
-static ssize_t ac_levels_show(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+ac_levels_show(struct kobject *kobj, struct kobj_attribute *attr,
 				char *buf)
 {
 	return sprintf(buf, "%s\n", AC_LEVELS);
@@ -205,7 +213,8 @@ static ssize_t ac_levels_show(struct kobject *kobj, struct kobj_attribute *attr,
 static struct kobj_attribute ac_levels_attribute =
 __ATTR(ac_levels, 0444, ac_levels_show, NULL);
 
-static ssize_t usb_levels_show(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+usb_levels_show(struct kobject *kobj, struct kobj_attribute *attr,
 				char *buf)
 {
 	return sprintf(buf, "%s\n", USB_LEVELS);
@@ -214,7 +223,8 @@ static ssize_t usb_levels_show(struct kobject *kobj, struct kobj_attribute *attr
 static struct kobj_attribute usb_levels_attribute =
 __ATTR(usb_levels, 0444, usb_levels_show, NULL);
 
-static ssize_t info_show(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+info_show(struct kobject *kobj, struct kobj_attribute *attr,
 				char *buf)
 {
 	return sprintf(
@@ -245,7 +255,8 @@ static ssize_t info_show(struct kobject *kobj, struct kobj_attribute *attr,
 static struct kobj_attribute info_attribute =
 __ATTR(info, 0444, info_show, NULL);
 
-static ssize_t version_show(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t
+version_show(struct kobject *kobj, struct kobj_attribute *attr,
 				char *buf)
 {
 	return sprintf(buf, "%s\n", FAST_CHARGE_VERSION);
@@ -257,7 +268,8 @@ __ATTR(version, 0444, version_show, NULL);
 /* Initialize fast charge sysfs folder */
 static struct kobject *force_fast_charge_kobj;
 
-static struct attribute *force_fast_charge_attrs[] = {
+static struct attribute *force_fast_charge_attrs[] =
+{
 	&force_fast_charge_attribute.attr,
 	&ac_charge_level_attribute.attr,
 	&usb_charge_level_attribute.attr,
@@ -269,7 +281,8 @@ static struct attribute *force_fast_charge_attrs[] = {
 	NULL,
 };
 
-static struct attribute_group force_fast_charge_attr_group = {
+static struct attribute_group force_fast_charge_attr_group =
+{
 	.attrs = force_fast_charge_attrs,
 };
 /* End sysfs interface */

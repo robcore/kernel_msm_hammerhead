@@ -172,6 +172,7 @@ int snd_reg_access(unsigned int reg)
 		default:
 			break;
 	}
+
 	return ret;
 }
 EXPORT_SYMBOL(snd_reg_access);
@@ -226,7 +227,6 @@ static ssize_t mic_gain_store(struct kobject *kobj,
 	snd_ctrl_locked = 2;
 
 	return count;
-
 }
 
 static ssize_t speaker_gain_show(struct kobject *kobj,
@@ -489,26 +489,26 @@ static struct kobj_attribute sound_control_enabled_attribute =
 		sound_control_enabled_store);
 
 static struct attribute *sound_control_attrs[] =
-	{
-		&cam_mic_gain_attribute.attr,
-		&mic_gain_attribute.attr,
-		&speaker_gain_attribute.attr,
-		&headphone_gain_attribute.attr,
-		&headphone_pa_gain_attribute.attr,
-		&sound_control_rec_locked_attribute.attr,
-		&sound_reg_sel_attribute.attr,
-		&sound_reg_read_attribute.attr,
-		&sound_reg_write_attribute.attr,
-		&sound_hw_revision_attribute.attr,
-		&sound_control_version_attribute.attr,
-		&sound_control_enabled_attribute.attr,
-		NULL,
-	};
+{
+	&cam_mic_gain_attribute.attr,
+	&mic_gain_attribute.attr,
+	&speaker_gain_attribute.attr,
+	&headphone_gain_attribute.attr,
+	&headphone_pa_gain_attribute.attr,
+	&sound_control_rec_locked_attribute.attr,
+	&sound_reg_sel_attribute.attr,
+	&sound_reg_read_attribute.attr,
+	&sound_reg_write_attribute.attr,
+	&sound_hw_revision_attribute.attr,
+	&sound_control_version_attribute.attr,
+	&sound_control_enabled_attribute.attr,
+	NULL,
+};
 
 static struct attribute_group sound_control_attr_group =
-	{
-		.attrs = sound_control_attrs,
-	};
+{
+	.attrs = sound_control_attrs,
+};
 
 static struct kobject *sound_control_kobj;
 
