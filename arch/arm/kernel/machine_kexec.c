@@ -45,8 +45,10 @@ int machine_kexec_prepare(struct kimage *image)
 	__be32 header;
 	int i, err;
 
-	/* No segment at default ATAGs address. try to locate
-	 * a dtb using magic */
+	/*
+	 * No segment at default ATAGs address. Try to locate
+	 * a dtb using magic.
+	 */
 	for (i = 0; i < image->nr_segments; i++) {
 		current_segment = &image->segment[i];
 
@@ -72,6 +74,7 @@ int machine_kexec_prepare(struct kimage *image)
 #endif
 		}
 	}
+
 	return 0;
 }
 

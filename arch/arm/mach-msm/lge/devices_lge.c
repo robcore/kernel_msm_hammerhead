@@ -131,6 +131,7 @@ void __init lge_reserve(void)
 
 	bank = &meminfo.bank[1];
 	start = bank->start + SZ_1M + LGE_PERSISTENT_RAM_SIZE;
+
 	ret = memblock_remove(start, SZ_1M);
 	if(!ret)
 		pr_info("Hardboot page reserved at 0x%X\n", start);
