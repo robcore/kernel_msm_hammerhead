@@ -4130,26 +4130,16 @@ static int taiko_volatile(struct snd_soc_codec *ssc, unsigned int reg)
 	return 0;
 }
 
-static int taiko_write(struct snd_soc_codec *codec, unsigned int reg,
-	unsigned int value)
-{
-	int ret;
+#ifdef CONFIG_SOUND_CONTROL
+extern int snd_reg_access(unsigned int);
+extern unsigned int snd_cache_read(unsigned int);
+extern void snd_cache_write(unsigned int, unsigned int);
+#endif
 
-	if (reg == SND_SOC_NOPM)
-		return 0;
-
-	BUG_ON(reg > TAIKO_MAX_REGISTER);
-
-	if (!taiko_volatile(codec, reg)) {
-		ret = snd_soc_cache_write(codec, reg, value);
-		if (ret != 0)
-			dev_err(codec->dev, "Cache write to %x failed: %d\n",
-				reg, ret);
-	}
-
-	return wcd9xxx_reg_write(codec->control_data, reg, value);
-}
-static unsigned int taiko_read(struct snd_soc_codec *codec,
+#ifndef CONFIG_SOUND_CONTROL 
+static
+#endif
+unsigned int taiko_read(struct snd_soc_codec *codec,
 				unsigned int reg)
 {
 	unsigned int val;
@@ -4173,6 +4163,50 @@ static unsigned int taiko_read(struct snd_soc_codec *codec,
 	val = wcd9xxx_reg_read(codec->control_data, reg);
 	return val;
 }
+#ifdef CONFIG_SOUND_CONTROL
+EXPORT_SYMBOL(taiko_read);
+#endif
+
+#ifndef CONFIG_SOUND_CONTROL
+static
+#endif
+int taiko_write(struct snd_soc_codec *codec, unsigned int reg,
+	unsigned int value)
+{
+	int ret;
+#ifdef CONFIG_SOUND_CONTROL
+	int val;
+#endif
+
+	if (reg == SND_SOC_NOPM)
+		return 0;
+
+	BUG_ON(reg > TAIKO_MAX_REGISTER);
+
+	if (!taiko_volatile(codec, reg)) {
+		ret = snd_soc_cache_write(codec, reg, value);
+		if (ret != 0)
+			dev_err(codec->dev, "Cache write to %x failed: %d\n",
+				reg, ret);
+	}
+
+#ifdef CONFIG_SOUND_CONTROL
+	if (!snd_reg_access(reg)) {
+		if (!((val = snd_cache_read(reg)) != -1)) {
+			val = wcd9xxx_reg_read_safe(codec->control_data, reg);
+		}
+	} else {
+		snd_cache_write(reg, value);
+		val = value;
+	}
+	return wcd9xxx_reg_write(codec->control_data, reg, val);
+#else
+	return wcd9xxx_reg_write(codec->control_data, reg, value);
+#endif
+}
+#ifdef CONFIG_SOUND_CONTROL
+EXPORT_SYMBOL(taiko_write);
+#endif
 
 static int taiko_startup(struct snd_pcm_substream *substream,
 		struct snd_soc_dai *dai)
@@ -6486,6 +6520,14 @@ static struct regulator *taiko_codec_find_regulator(struct snd_soc_codec *codec,
 	return NULL;
 }
 
+#ifdef CONFIG_SOUND_CONTROL
+struct snd_soc_codec *snd_engine_codec_ptr;
+EXPORT_SYMBOL(snd_engine_codec_ptr);
+
+int wcd9xxx_hw_revision;
+EXPORT_SYMBOL(wcd9xxx_hw_revision);
+#endif
+
 static int taiko_codec_probe(struct snd_soc_codec *codec)
 {
 	struct wcd9xxx *control;
@@ -6498,9 +6540,20 @@ static int taiko_codec_probe(struct snd_soc_codec *codec)
 	void *ptr = NULL;
 	struct wcd9xxx *core = dev_get_drvdata(codec->dev->parent);
 
+#ifdef CONFIG_SOUND_CONTROL
+	pr_info("taiko codec probe...\n");
+	snd_engine_codec_ptr = codec;
+#endif
+
 	codec->control_data = dev_get_drvdata(codec->dev->parent);
 	control = codec->control_data;
 
+#ifdef CONFIG_SOUND_CONTROL
+	if (TAIKO_IS_1_0(control->version))
+		wcd9xxx_hw_revision = 1;
+	else
+		wcd9xxx_hw_revision = 2;
+#endif
 	wcd9xxx_ssr_register(control, taiko_device_down,
 			     taiko_post_reset_cb, (void *)codec);
 
