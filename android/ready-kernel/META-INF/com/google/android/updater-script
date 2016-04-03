@@ -21,6 +21,12 @@ set_perm(0, 0, 0777, "/tmp/editramdisk.sh");
 set_perm(0, 0, 0777, "/tmp/makebootimg.sh");
 set_perm(0, 0, 0777, "/tmp/mkbootimg");
 set_perm(0, 0, 0777, "/tmp/unpackbootimg");
+set_perm_recursive(0, 0, 0644, 0644, "/system/etc/thermal-engine-8974.conf");
+
+# Speed up eMMC storage
+run_program("/tmp/busybox", "fstrim", "/cache");
+run_program("/tmp/busybox", "fstrim", "/data");
+run_program("/tmp/busybox", "fstrim", "/system");
 
 # On-The-Fly ramdisk modification
 ui_print("Customizing ramdisk");
