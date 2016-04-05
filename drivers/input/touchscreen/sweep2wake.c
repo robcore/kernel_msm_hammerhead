@@ -1,7 +1,6 @@
 /*
  * drivers/input/touchscreen/sweep2wake.c
  *
- *
  * Copyright (c) 2013, Dennis Rassmann <showp1984@gmail.com>
  *
  * Wake Gestures
@@ -21,7 +20,6 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>
@@ -33,17 +31,9 @@
 #include <linux/slab.h>
 #include <linux/workqueue.h>
 #include <linux/input.h>
-#ifndef CONFIG_HAS_EARLYSUSPEND
 #include <linux/lcd_notify.h>
-#else
-#include <linux/earlysuspend.h>
-#endif
 #include <linux/hrtimer.h>
 
-/* uncomment since no touchscreen defines android touch, do that here */
-//#define ANDROID_TOUCH_DECLARED
-
-/* Version, author, desc, etc */
 #define DRIVER_AUTHOR "Dennis Rassmann <showp1984@gmail.com>"
 #define DRIVER_DESCRIPTION "Sweep2wake for almost any device"
 #define DRIVER_VERSION "1.5"
@@ -54,28 +44,17 @@ MODULE_DESCRIPTION(DRIVER_DESCRIPTION);
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPLv2");
 
-/* Tuneables */
-#define S2W_DEBUG		0
+/* Tunables */
 #define S2W_DEFAULT		0
-#define S2W_PWRKEY_DUR          60
+#define S2W_PWRKEY_DUR		60
 
-#ifdef CONFIG_MACH_MSM8974_HAMMERHEAD
-/* Hammerhead aka Nexus 5 */
-#define S2W_Y_MAX               1920
-#define S2W_X_MAX               1080
-#define S2W_Y_LIMIT             S2W_Y_MAX-130
-#define S2W_X_B1                400
-#define S2W_X_B2                700
-#define S2W_X_FINAL             275
-#define S2W_Y_NEXT              180
-#else
-/* defaults */
-#define S2W_Y_LIMIT             2350
-#define S2W_X_MAX               1540
-#define S2W_X_B1                500
-#define S2W_X_B2                1000
-#define S2W_X_FINAL             300
-#endif
+#define S2W_Y_MAX		1920
+#define S2W_X_MAX		1080
+#define S2W_Y_LIMIT		S2W_Y_MAX-130
+#define S2W_X_B1		400
+#define S2W_X_B2		700
+#define S2W_X_FINAL		275
+#define S2W_Y_NEXT		180
 
 /* Wake Gestures */
 #define SWEEP_TIMEOUT		30
@@ -106,9 +85,7 @@ static bool barrierx[2] = {false, false}, barriery[2] = {false, false};
 static int firstx = 0, firsty = 0;
 static unsigned long firstx_time = 0, firsty_time = 0;
 static unsigned long pwrtrigger_time[2] = {0, 0};
-#ifndef CONFIG_HAS_EARLYSUSPEND
 static struct notifier_block s2w_lcd_notif;
-#endif
 static struct input_dev * sweep2wake_pwrdev;
 static DEFINE_MUTEX(pwrkeyworklock);
 static struct workqueue_struct *s2w_input_wq;
@@ -129,14 +106,15 @@ static int __init read_s2w_cmdline(char *s2w)
 	} else {
 		pr_info("[cmdline_s2w]: No valid input found. Going with default: | s2w='%u'\n", s2w_switch);
 	}
+
 	return 1;
 }
 __setup("s2w=", read_s2w_cmdline);
 
 static void report_gesture(int gest)
 {
-        pwrtrigger_time[1] = pwrtrigger_time[0];
-        pwrtrigger_time[0] = jiffies;	
+	pwrtrigger_time[1] = pwrtrigger_time[0];
+	pwrtrigger_time[0] = jiffies;	
 
 	if (pwrtrigger_time[0] - pwrtrigger_time[1] < TRIGGER_TIMEOUT)
 		return;
@@ -147,9 +125,11 @@ static void report_gesture(int gest)
 }
 
 /* PowerKey work func */
-static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
+static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work)
+{
 	if (!mutex_trylock(&pwrkeyworklock))
-                return;
+		return;
+
 	input_event(sweep2wake_pwrdev, EV_KEY, KEY_POWER, 1);
 	input_event(sweep2wake_pwrdev, EV_SYN, 0, 0);
 	msleep(S2W_PWRKEY_DUR);
@@ -167,15 +147,17 @@ static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 		camera = false;
 	}
 
-        mutex_unlock(&pwrkeyworklock);
+	mutex_unlock(&pwrkeyworklock);
+
 	return;
 }
 static DECLARE_WORK(sweep2wake_presspwr_work, sweep2wake_presspwr);
 
 /* PowerKey trigger */
-static void sweep2wake_pwrtrigger(bool camera_trigger) {
-        pwrtrigger_time[1] = pwrtrigger_time[0];
-        pwrtrigger_time[0] = jiffies;
+static void sweep2wake_pwrtrigger(bool camera_trigger)
+{
+	pwrtrigger_time[1] = pwrtrigger_time[0];
+	pwrtrigger_time[0] = jiffies;
 	
 	if (pwrtrigger_time[0] - pwrtrigger_time[1] < TRIGGER_TIMEOUT)
 		return;
@@ -187,11 +169,12 @@ static void sweep2wake_pwrtrigger(bool camera_trigger) {
 
 	schedule_work(&sweep2wake_presspwr_work);
 
-        return;
+	return;
 }
 
 /* reset on finger release */
-static void sweep2wake_reset(void) {
+static void sweep2wake_reset(void)
+{
 	exec_countx = true;
 	barrierx[0] = false;
 	barrierx[1] = false;
@@ -209,7 +192,7 @@ static void sweep2wake_reset(void) {
 static void detect_sweep2wake_v(int x, int y, bool st)
 {
 	int prevy = 0, nexty = 0;
-        bool single_touch = st;
+	bool single_touch = st;
 
 	if (firsty == 0) {
 		firsty = y;
@@ -217,7 +200,6 @@ static void detect_sweep2wake_v(int x, int y, bool st)
 	}
 
 	if (x > 100 && x < 980) {
-		//up
 		if (firsty > 960 && single_touch && (s2w_switch & SWEEP_UP)) {
 			prevy = firsty;
 			nexty = prevy - S2W_Y_NEXT;
@@ -235,7 +217,7 @@ static void detect_sweep2wake_v(int x, int y, bool st)
 								if (gestures_switch) {
 									report_gesture(3);
 								} else {
-						                        sweep2wake_pwrtrigger(false);
+									sweep2wake_pwrtrigger(false);
 								}
 								exec_county = false;
 							}
@@ -243,7 +225,6 @@ static void detect_sweep2wake_v(int x, int y, bool st)
 					}
 				}
 			}
-		//down
 		} else if (firsty <= 960 && single_touch && (s2w_switch & SWEEP_DOWN || camera_switch)) {
 			prevy = firsty;
 			nexty = prevy + S2W_Y_NEXT;
@@ -261,7 +242,7 @@ static void detect_sweep2wake_v(int x, int y, bool st)
 								if (gestures_switch) {
 									report_gesture(4);
 								} else {
-						                        sweep2wake_pwrtrigger(camera_switch);
+									sweep2wake_pwrtrigger(camera_switch);
 								}
 								exec_county = false;
 							}
@@ -275,8 +256,8 @@ static void detect_sweep2wake_v(int x, int y, bool st)
 
 static void detect_sweep2wake_h(int x, int y, bool st, bool wake)
 {
-        int prevx = 0, nextx = 0;
-        bool single_touch = st;
+	int prevx = 0, nextx = 0;
+	bool single_touch = st;
 
 	if (firstx == 0) {
 		firstx = x;
@@ -287,11 +268,7 @@ static void detect_sweep2wake_h(int x, int y, bool st, bool wake)
 		sweep2wake_reset();
 		return;
 	}
-#if S2W_DEBUG
-        pr_info(LOGTAG"x,y(%4d,%4d) single:%s\n",
-                x, y, (single_touch) ? "true" : "false");
-#endif
-	//left->right
+
 	if (firstx < 510 && single_touch &&
 		((wake && (s2w_switch & SWEEP_RIGHT)) || (!wake && (s2s_switch & SWEEP_RIGHT)))) {
 		prevx = 0;
@@ -312,7 +289,7 @@ static void detect_sweep2wake_h(int x, int y, bool st, bool wake)
 							if (gestures_switch && wake) {
 								report_gesture(1);
 							} else {
-						        	sweep2wake_pwrtrigger(false);
+								sweep2wake_pwrtrigger(false);
 							}
 							exec_countx = false;
 						}
@@ -320,7 +297,6 @@ static void detect_sweep2wake_h(int x, int y, bool st, bool wake)
 				}
 			}
 		}
-	//right->left
 	} else if (firstx >= 510 && single_touch &&
 		((wake && (s2w_switch & SWEEP_LEFT)) || (!wake && (s2s_switch & SWEEP_LEFT)))) {
 		prevx = (S2W_X_MAX - S2W_X_FINAL);
@@ -341,7 +317,7 @@ static void detect_sweep2wake_h(int x, int y, bool st, bool wake)
 							if (gestures_switch && wake) {
 								report_gesture(2);
 							} else {
-						        	sweep2wake_pwrtrigger(false);
+								sweep2wake_pwrtrigger(false);
 							}
 							exec_countx = false;
 						}
@@ -352,9 +328,11 @@ static void detect_sweep2wake_h(int x, int y, bool st, bool wake)
 	}
 }
 
-static void s2w_input_callback(struct work_struct *unused) {
+static void s2w_input_callback(struct work_struct *unused)
+{
 
 	detect_sweep2wake_h(touch_x, touch_y, true, scr_suspended);
+
 	if (scr_suspended)
 		detect_sweep2wake_v(touch_x, touch_y, true);
 
@@ -362,14 +340,8 @@ static void s2w_input_callback(struct work_struct *unused) {
 }
 
 static void s2w_input_event(struct input_handle *handle, unsigned int type,
-				unsigned int code, int value) {
-#if S2W_DEBUG
-	pr_info("sweep2wake: code: %s|%u, val: %i\n",
-		((code==ABS_MT_POSITION_X) ? "X" :
-		(code==ABS_MT_POSITION_Y) ? "Y" :
-		(code==ABS_MT_TRACKING_ID) ? "ID" :
-		"undef"), code, value);
-#endif
+				unsigned int code, int value)
+{
 	if (code == ABS_MT_SLOT) {
 		sweep2wake_reset();
 		return;
@@ -401,7 +373,8 @@ static void s2w_input_event(struct input_handle *handle, unsigned int type,
 	}
 }
 
-static int input_dev_filter(struct input_dev *dev) {
+static int input_dev_filter(struct input_dev *dev)
+{
 	if (strstr(dev->name, "touch")) {
 		return 0;
 	} else {
@@ -410,7 +383,8 @@ static int input_dev_filter(struct input_dev *dev) {
 }
 
 static int s2w_input_connect(struct input_handler *handler,
-				struct input_dev *dev, const struct input_device_id *id) {
+				struct input_dev *dev, const struct input_device_id *id)
+{
 	struct input_handle *handle;
 	int error;
 
@@ -434,6 +408,7 @@ static int s2w_input_connect(struct input_handler *handler,
 		goto err1;
 
 	return 0;
+
 err1:
 	input_unregister_handle(handle);
 err2:
@@ -441,18 +416,21 @@ err2:
 	return error;
 }
 
-static void s2w_input_disconnect(struct input_handle *handle) {
+static void s2w_input_disconnect(struct input_handle *handle)
+{
 	input_close_device(handle);
 	input_unregister_handle(handle);
 	kfree(handle);
 }
 
-static const struct input_device_id s2w_ids[] = {
+static const struct input_device_id s2w_ids[] =
+{
 	{ .driver_info = 1 },
 	{ },
 };
 
-static struct input_handler s2w_input_handler = {
+static struct input_handler s2w_input_handler =
+{
 	.event		= s2w_input_event,
 	.connect	= s2w_input_connect,
 	.disconnect	= s2w_input_disconnect,
@@ -460,38 +438,22 @@ static struct input_handler s2w_input_handler = {
 	.id_table	= s2w_ids,
 };
 
-#ifndef CONFIG_HAS_EARLYSUSPEND
 static int lcd_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
 	switch (event) {
-	case LCD_EVENT_ON_END:
-		scr_suspended = false;
-		break;
-	case LCD_EVENT_OFF_END:
-		scr_suspended = true;
-		break;
-	default:
-		break;
+		case LCD_EVENT_ON_END:
+			scr_suspended = false;
+			break;
+		case LCD_EVENT_OFF_END:
+			scr_suspended = true;
+			break;
+		default:
+			break;
 	}
 
 	return 0;
 }
-#else
-static void s2w_early_suspend(struct early_suspend *h) {
-	scr_suspended = true;
-}
-
-static void s2w_late_resume(struct early_suspend *h) {
-	scr_suspended = false;
-}
-
-static struct early_suspend s2w_early_suspend_handler = {
-	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
-	.suspend = s2w_early_suspend,
-	.resume = s2w_late_resume,
-};
-#endif
 
 /*
  * SYSFS stuff below here
@@ -527,7 +489,9 @@ static ssize_t sweep2sleep_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
+
 	count += sprintf(buf, "%d\n", s2s_switch);
+
 	return count;
 }
 
@@ -535,8 +499,9 @@ static ssize_t sweep2sleep_dump(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	if (buf[0] >= '0' && buf[0] <= '3' && buf[1] == '\n')
-                if (s2s_switch != buf[0] - '0')
-		        s2s_switch = buf[0] - '0';
+		if (s2s_switch != buf[0] - '0')
+			s2s_switch = buf[0] - '0';
+
 	return count;
 }
 
@@ -566,7 +531,9 @@ static ssize_t wake_gestures_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
+
 	count += sprintf(buf, "%d\n", gestures_switch);
+
 	return count;
 }
 
@@ -574,8 +541,9 @@ static ssize_t wake_gestures_dump(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	if (buf[0] >= '0' && buf[0] <= '1' && buf[1] == '\n')
-                if (gestures_switch != buf[0] - '0')
-		        gestures_switch = buf[0] - '0';
+		if (gestures_switch != buf[0] - '0')
+			gestures_switch = buf[0] - '0';
+
 	return count;
 }
 
@@ -586,7 +554,9 @@ static ssize_t vib_strength_show(struct device *dev,
 		 struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
+
 	count += sprintf(buf, "%d\n", vib_strength);
+
 	return count;
 }
 
@@ -607,6 +577,7 @@ static ssize_t camera_gesture_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	size_t count = 0;
+
 	count += sprintf(buf, "%d\n", camera_switch);
 
 	return count;
@@ -664,6 +635,7 @@ static int __init sweep2wake_init(void)
 		return -EFAULT;
 	}
 	INIT_WORK(&s2w_input_work, s2w_input_callback);
+
 	rc = input_register_handler(&s2w_input_handler);
 	if (rc)
 		pr_err("%s: Failed to register s2w_input_handler\n", __func__);
@@ -684,14 +656,11 @@ static int __init sweep2wake_init(void)
 	}
 	gestures_setdev(gesture_dev);
 
-#ifndef CONFIG_HAS_EARLYSUSPEND
 	s2w_lcd_notif.notifier_call = lcd_notifier_callback;
+
 	if (lcd_register_client(&s2w_lcd_notif) != 0) {
 		pr_err("%s: Failed to register lcd callback\n", __func__);
 	}
-#else
-	register_early_suspend(&s2w_early_suspend_handler);
-#endif
 
 #ifndef ANDROID_TOUCH_DECLARED
 	android_touch_kobj = kobject_create_and_add("android_touch", NULL) ;
@@ -703,22 +672,27 @@ static int __init sweep2wake_init(void)
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
 	}
+
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2sleep.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2sleep\n", __func__);
 	}
+
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake_version.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2wake_version\n", __func__);
 	}
+
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_wake_gestures.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for wake_gestures\n", __func__);
 	}
+
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_vib_strength.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for vib_strength\n", __func__);
 	}
+
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_camera_gesture.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for camera_gesture\n", __func__);
@@ -737,16 +711,13 @@ static void __exit sweep2wake_exit(void)
 #ifndef ANDROID_TOUCH_DECLARED
 	kobject_del(android_touch_kobj);
 #endif
-#ifndef CONFIG_HAS_EARLYSUSPEND
 	lcd_unregister_client(&s2w_lcd_notif);
-#endif
 	input_unregister_handler(&s2w_input_handler);
 	destroy_workqueue(s2w_input_wq);
 	input_unregister_device(sweep2wake_pwrdev);
 	input_free_device(sweep2wake_pwrdev);
+
 	return;
 }
-
 module_init(sweep2wake_init);
 module_exit(sweep2wake_exit);
-

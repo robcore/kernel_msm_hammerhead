@@ -13,7 +13,6 @@
  * GNU General Public License for more details.
  *
  */
-
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/lcd_notify.h>
@@ -33,8 +32,8 @@
 
 #define WAKE_TIMEOUT_MAJOR_VERSION	1
 #define WAKE_TIMEOUT_MINOR_VERSION	0
-#define WAKEFUNC "wakefunc"
-#define PWRKEY_DUR		60
+#define WAKEFUNC 			"wakefunc"
+#define PWRKEY_DUR			60
 
 static struct input_dev * wake_pwrdev;
 static DEFINE_MUTEX(pwrkeyworklock);
@@ -43,10 +42,11 @@ static long long wake_timeout = 0;
 static struct alarm wakefunc_rtc;
 static bool wakefunc_triggered = false;
 
-
-static void wake_presspwr(struct work_struct * wake_presspwr_work) {
+static void wake_presspwr(struct work_struct * wake_presspwr_work)
+{
 	if (!mutex_trylock(&pwrkeyworklock))
-                return;
+		return;
+
 	input_event(wake_pwrdev, EV_KEY, KEY_POWER, 1);
 	input_event(wake_pwrdev, EV_SYN, 0, 0);
 	msleep(PWRKEY_DUR);
@@ -63,15 +63,17 @@ static void wake_presspwr(struct work_struct * wake_presspwr_work) {
 	input_event(wake_pwrdev, EV_KEY, KEY_POWER, 0);
 	input_event(wake_pwrdev, EV_SYN, 0, 0);
 	msleep(PWRKEY_DUR);
-        mutex_unlock(&pwrkeyworklock);
+	mutex_unlock(&pwrkeyworklock);
 	
 	return;
 }
 static DECLARE_WORK(wake_presspwr_work, wake_presspwr);
 
-void wake_pwrtrigger(void) {
+void wake_pwrtrigger(void)
+{
 	schedule_work(&wake_presspwr_work);
-        return;
+
+	return;
 }
 
 static void wakefunc_rtc_start(void)
@@ -110,7 +112,6 @@ static void wakefunc_rtc_cancel(void)
 				WAKEFUNC);
 }
 
-
 static void wakefunc_rtc_callback(struct alarm *al)
 {
 	struct timeval ts;
@@ -121,7 +122,6 @@ static void wakefunc_rtc_callback(struct alarm *al)
 	pr_debug("%s: Time of alarm expiry: %ld\n", WAKEFUNC,
 			ts.tv_sec);
 }
-
 
 //sysfs
 static ssize_t show_wake_timeout(struct device *dev,
@@ -150,7 +150,6 @@ static ssize_t store_wake_timeout(struct device *dev,
 static DEVICE_ATTR(wake_timeout, (S_IWUSR|S_IRUGO),
 	show_wake_timeout, store_wake_timeout);
 
-
 #ifdef ANDROID_TOUCH_DECLARED
 extern struct kobject *android_touch_kobj;
 #else
@@ -158,30 +157,29 @@ struct kobject *android_touch_kobj;
 EXPORT_SYMBOL_GPL(android_touch_kobj);
 #endif
 
-
 static int lcd_notifier_callback(struct notifier_block *this,
 				unsigned long event, void *data)
 {
 	switch (event) {
-	case LCD_EVENT_ON_START:
-		wakefunc_rtc_cancel();
-		break;
-	case LCD_EVENT_ON_END:
-		break;
-	case LCD_EVENT_OFF_START:
-		if (pwrkey_pressed == false && wakefunc_triggered == false && wake_timeout > 0) {
-			wakefunc_rtc_start();
-		}
-		break;
-	case LCD_EVENT_OFF_END:
-		break;
-	default:
-		break;
+		case LCD_EVENT_ON_START:
+			wakefunc_rtc_cancel();
+			break;
+		case LCD_EVENT_ON_END:
+			break;
+		case LCD_EVENT_OFF_START:
+			if (pwrkey_pressed == false &&
+			    wakefunc_triggered == false && wake_timeout > 0) {
+				wakefunc_rtc_start();
+			}
+			break;
+		case LCD_EVENT_OFF_END:
+			break;
+		default:
+			break;
 	}
 
 	return 0;
 }
-
 
 static int __init wake_timeout_init(void)
 {
@@ -222,6 +220,7 @@ static int __init wake_timeout_init(void)
 	}
 
 	wfnotif.notifier_call = lcd_notifier_callback;
+
 	rc = lcd_register_client(&wfnotif);
 	if (rc)
 		pr_warn("%s: error\n", __func__);
@@ -234,10 +233,8 @@ err_alloc_dev:
 	return 0;
 }
 
-
 static void __exit wake_timeout_exit(void)
 {
-
 	alarm_cancel(&wakefunc_rtc);
 #ifndef ANDROID_TOUCH_DECLARED
 	kobject_del(android_touch_kobj);
