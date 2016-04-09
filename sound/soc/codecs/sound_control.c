@@ -289,8 +289,8 @@ static ssize_t cam_mic_gain_store(struct kobject *kobj,
 	if (!snd_ctrl_enabled)
 		return count;
 
-	if (lval >= 255)
-		lval = 255;
+	if (lval >= 20)
+		lval = 20;
 	if (lval < 0)
 		lval = 0;
 
@@ -320,8 +320,8 @@ static ssize_t mic_gain_store(struct kobject *kobj,
 	if (!snd_ctrl_enabled)
 		return count;
 
-	if (lval >= 255)
-		lval = 255;
+	if (lval >= 20)
+		lval = 20;
 	if (lval < 0)
 		lval = 0;
 
@@ -353,10 +353,10 @@ static ssize_t speaker_gain_store(struct kobject *kobj,
 	if (!snd_ctrl_enabled)
 		return count;
 
-	if (lval >= 255)
-		lval = 255;
-	if (rval >= 255)
-		rval = 255;
+	if (lval >= 20)
+		lval = 20;
+	if (rval >= 20)
+		rval = 20;
 	if (lval < 0)
 		lval = 0;
 	if (rval < 0)
