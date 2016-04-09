@@ -217,6 +217,7 @@ int snd_reg_access(unsigned int reg)
 	int ret = 1;
 
 	switch (reg) {
+		/* Analog Power Amp (PA) */
 		case TAIKO_A_RX_HPH_L_GAIN:
 		case TAIKO_A_RX_HPH_R_GAIN:
 			if (snd_ctrl_locked > 1)
@@ -227,16 +228,19 @@ int snd_reg_access(unsigned int reg)
 			if (snd_ctrl_locked > 1)
 				ret = 0;
 			break;
+		/* Digital Headphones Gain */
 		case TAIKO_A_CDC_RX1_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX2_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX3_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX4_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX5_VOL_CTL_B2_CTL:
 		case TAIKO_A_CDC_RX6_VOL_CTL_B2_CTL:
+		/* Loud Speaker Gain */
 		case TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL:
 			if (snd_ctrl_locked > 0)
 				ret = 0;
 			break;
+		/* Line out gain */
 		case TAIKO_A_RX_LINE_1_GAIN:
 		case TAIKO_A_RX_LINE_2_GAIN:
 		case TAIKO_A_RX_LINE_3_GAIN:
@@ -249,7 +253,9 @@ int snd_reg_access(unsigned int reg)
 		case TAIKO_A_CDC_TX3_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX4_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX5_VOL_CTL_GAIN:
+		/* Incall MIC Gain */
 		case TAIKO_A_CDC_TX6_VOL_CTL_GAIN:
+		/* Camera MIC Gain */
 		case TAIKO_A_CDC_TX7_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX8_VOL_CTL_GAIN:
 		case TAIKO_A_CDC_TX9_VOL_CTL_GAIN:
@@ -276,12 +282,17 @@ static ssize_t cam_mic_gain_show(struct kobject *kobj,
 static ssize_t cam_mic_gain_store(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int lval, chksum;
+	unsigned int lval;
 
-	sscanf(buf, "%u %u", &lval, &chksum);
+	sscanf(buf, "%u", &lval);
 
 	if (!snd_ctrl_enabled)
 		return count;
+
+	if (lval >= 255)
+		lval = 255;
+	if (lval < 0)
+		lval = 0;
 
 	snd_ctrl_locked = 0;
 	taiko_write(snd_engine_codec_ptr,
@@ -302,12 +313,17 @@ static ssize_t mic_gain_show(struct kobject *kobj,
 static ssize_t mic_gain_store(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int lval, chksum;
+	unsigned int lval;
 
-	sscanf(buf, "%u %u", &lval, &chksum);
+	sscanf(buf, "%u", &lval);
 
 	if (!snd_ctrl_enabled)
 		return count;
+
+	if (lval >= 255)
+		lval = 255;
+	if (lval < 0)
+		lval = 0;
 
 	snd_ctrl_locked = 0;
 	taiko_write(snd_engine_codec_ptr,
@@ -330,13 +346,23 @@ static ssize_t speaker_gain_show(struct kobject *kobj,
 static ssize_t speaker_gain_store(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int lval, rval, chksum;
+	unsigned int lval, rval;
 
-	sscanf(buf, "%u %u %u", &lval, &rval, &chksum);
+	sscanf(buf, "%u %u", &lval, &rval);
 
 	if (!snd_ctrl_enabled)
 		return count;
 
+	if (lval >= 255)
+		lval = 255;
+	if (rval >= 255)
+		rval = 255;
+	if (lval < 0)
+		lval = 0;
+	if (rval < 0)
+		rval = 0;
+
+	/* For mono speaker lval = rval */
 	snd_ctrl_locked = 0;
 	taiko_write(snd_engine_codec_ptr,
 		TAIKO_A_CDC_RX7_VOL_CTL_B2_CTL, lval);
@@ -360,9 +386,9 @@ static ssize_t headphone_gain_show(struct kobject *kobj,
 static ssize_t headphone_gain_store(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int lval, rval, chksum;
+	unsigned int lval, rval;
 
-	sscanf(buf, "%u %u %u", &lval, &rval, &chksum);
+	sscanf(buf, "%u %u", &lval, &rval);
 
 	if (!snd_ctrl_enabled)
 		return count;
@@ -387,17 +413,16 @@ static ssize_t headphone_pa_gain_show(struct kobject *kobj,
 static ssize_t headphone_pa_gain_store(struct kobject *kobj,
 		struct kobj_attribute *attr, const char *buf, size_t count)
 {
-	unsigned int lval, rval, chksum;
+	unsigned int lval, rval;
 	unsigned int gain, status;
 	unsigned int out;
 
-	sscanf(buf, "%u %u %u", &lval, &rval, &chksum);
+	sscanf(buf, "%u %u", &lval, &rval);
 
 	if (!snd_ctrl_enabled)
 		return count;
 
 	snd_ctrl_locked = 0;
-
 	gain = taiko_read(snd_engine_codec_ptr, TAIKO_A_RX_HPH_L_GAIN);
 	out = (gain & 0xf0) | lval;
 	taiko_write(snd_engine_codec_ptr, TAIKO_A_RX_HPH_L_GAIN, out);
@@ -415,7 +440,6 @@ static ssize_t headphone_pa_gain_store(struct kobject *kobj,
 	status = taiko_read(snd_engine_codec_ptr, TAIKO_A_RX_HPH_R_STATUS);
 	out = (status & 0x0f) | (rval << 4);
 	taiko_write(snd_engine_codec_ptr, TAIKO_A_RX_HPH_R_STATUS, out);
-
 	snd_ctrl_locked = 2;
 
 	return count;
