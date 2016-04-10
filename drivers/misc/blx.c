@@ -60,7 +60,7 @@ static struct attribute_group blx_group =
 static struct miscdevice blx_device =
 {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "BLX_dev",
+	.name = "batterylifeextender",
 };
 
 int get_charginglimit(void)
