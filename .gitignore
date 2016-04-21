@@ -81,7 +81,10 @@ GRTAGS
 GSYMS
 GTAGS
 
+# junk from patches
 *.orig
 *.rej
+*.patch
+
 *~
 \#*#

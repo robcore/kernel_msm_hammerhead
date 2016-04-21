@@ -5,20 +5,14 @@ cp /tmp/boot.img-ramdisk.gz /tmp/ramdisk/
 cd /tmp/ramdisk/
 gunzip -c /tmp/ramdisk/boot.img-ramdisk.gz | cpio -i
 
-found=$(find /tmp/ramdisk/init.rc -type f | xargs grep -oh "run-parts /system/etc/init.d");
-if [ "$found" != 'run-parts /system/etc/init.d' ]; then
-        bblocation=$(find /system/ -name 'busybox')
-        if [ -n "$bblocation" ] && [ -e "$bblocation" ] ; then
-                bblocation=${bblocation#.};
-        else
-                bblocation="/system/xbin/busybox";
-        fi
+found=$(find /tmp/ramdisk/init.rc -type f | xargs grep -oh "userinit");
+if [ ! $found ]; then
         echo "" >> /tmp/ramdisk/init.rc
-        echo "service userinit $bblocation run-parts /system/etc/init.d" >> /tmp/ramdisk/init.rc
-        echo "    oneshot" >> /tmp/ramdisk/init.rc
+        echo "service userinit /system/xbin/busybox run-parts /system/etc/init.d" >> /tmp/ramdisk/init.rc
         echo "    class late_start" >> /tmp/ramdisk/init.rc
         echo "    user root" >> /tmp/ramdisk/init.rc
         echo "    group root" >> /tmp/ramdisk/init.rc
+        echo "    oneshot" >> /tmp/ramdisk/init.rc
 fi
 
 rm /tmp/boot.img-ramdisk.gz

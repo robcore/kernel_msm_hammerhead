@@ -1,6 +1,6 @@
 #!/tmp/busybox sh
 
-BB=/tmp/busybox
+BB=/system/xbin/busybox
 
 systemfs=$(eval $($BB blkid /dev/block/platform/msm_sdcc.1/by-name/system | $BB awk ' { print $3 } '); $BB echo $TYPE);
 datafs=$(eval $($BB blkid /dev/block/platform/msm_sdcc.1/by-name/userdata | $BB awk ' { print $3 } '); $BB echo $TYPE);
