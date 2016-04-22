@@ -152,7 +152,7 @@ on post-fs-data
     write /persist/sensors/sensors_settings 1
     chmod 660 /persist/sensors/sensors_settings
 
-    # communicate with mpdecision and thermald
+    # communicate with mpdecision
     mkdir /dev/socket/mpdecision 2770 root system
 
     # save rtc time offsets
@@ -165,7 +165,6 @@ on post-fs-data
     setprop vold.post_fs_data_done 1
 
     # Set the CPU Freq Sampling rates
-    write /sys/module/msm_thermal/core_control/enabled 0
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
     write /sys/devices/system/cpu/cpu3/online 1
@@ -188,7 +187,6 @@ on post-fs-data
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
-    write /sys/module/msm_thermal/core_control/enabled 1
     chown root.system /sys/devices/system/cpu/mfreq
     chmod 220 /sys/devices/system/cpu/mfreq
     chown root.system /sys/devices/system/cpu/cpu1/online
@@ -218,7 +216,6 @@ on charger
     write /sys/module/pm_8x60/modes/cpu2/power_collapse/suspend_enabled 1
     write /sys/module/pm_8x60/modes/cpu3/power_collapse/suspend_enabled 1
     write /sys/module/pm_8x60/modes/cpu0/power_collapse/idle_enabled 1
-    write /sys/module/msm_thermal/core_control/enabled 0
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
     write /sys/devices/system/cpu/cpu3/online 1
@@ -230,7 +227,6 @@ on charger
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
-    write /sys/module/msm_thermal/core_control/enabled 1
     write /sys/devices/system/cpu/cpu1/online 0
     write /sys/devices/system/cpu/cpu2/online 0
     write /sys/devices/system/cpu/cpu3/online 0
@@ -431,11 +427,6 @@ service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     user root
     group root
     disabled
-
-service thermal-engine /system/bin/thermal-engine-hh
-    class main
-    user root
-    group radio system
 
 service vss_init /vendor/bin/vss_init
     class late_start

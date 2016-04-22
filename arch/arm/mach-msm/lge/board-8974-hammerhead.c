@@ -88,6 +88,24 @@ static void __init msm8974_early_memory(void)
 	of_scan_flat_dt(dt_scan_for_memory_hole, msm8974_reserve_table);
 }
 
+static struct msm_thermal_data msm_thermal_pdata = {
+	.sensor_id = 0,
+	.poll_ms = 400,
+	.shutdown_temp = 90,
+
+	.allowed_max_high = 88,
+	.allowed_max_low = 85,
+	.allowed_max_freq = 729600,
+
+	.allowed_mid_high = 85,
+	.allowed_mid_low = 82,
+	.allowed_mid_freq = 1190400,
+
+	.allowed_low_high = 82,
+	.allowed_low_low = 79,
+	.allowed_low_freq = 1728000,
+};
+
 /*
  * Used to satisfy dependencies for devices that need to be
  * run early or in a particular order. Most likely your device doesn't fall
@@ -109,7 +127,7 @@ void __init msm8974_add_drivers(void)
 	krait_power_init();
 	msm_clock_init(&msm8974_clock_init_data);
 	tsens_tm_init_driver();
-	msm_thermal_device_init();
+	msm_thermal_init(&msm_thermal_pdata);
 	lge_add_persistent_device();
 #if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE)
 	init_bcm_wifi();
