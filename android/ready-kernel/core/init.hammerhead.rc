@@ -263,6 +263,15 @@ on property:sys.boot_completed=1
     # sched
     write /dev/cpuctl/cpu.notify_on_migrate 1
 
+    # cpu-boost
+    write /sys/module/cpu_boost/parameters/boost_ms 20
+    write /sys/module/cpu_boost/parameters/input_boost_freq 1267200
+    write /sys/module/cpu_boost/parameters/input_boost_ms 40
+    write /sys/module/cpu_boost/parameters/load_based_syncs 1
+    write /sys/module/cpu_boost/parameters/migration_load_threshold 20
+    chown system system /sys/module/cpu_boost/parameters/input_boost_ms
+    chmod 664 /sys/module/cpu_boost/parameters/input_boost_ms
+
     # enable slimport detection
     write /sys/module/slimport/parameters/enable_irq 1
 
