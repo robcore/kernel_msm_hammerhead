@@ -285,6 +285,8 @@ config ARCH_MSM8974
 	select MSM_LPM_TEST
 	select MSM_RPM_LOG
 	select ARCH_WANT_KMAP_ATOMIC_FLUSH
+	select HAS_MACH_MEMUTILS
+	select FORCE_FAST_CHARGE
 
 config ARCH_APQ8084
 	bool "APQ8084"
@@ -3061,5 +3063,18 @@ config WALL_CLK_SYSFS
 	help
 	 Support the wallclk directory in sysfs filesystem to enable the
 	 wall clock simulation and read the current SFN.
+
+config FORCE_FAST_CHARGE
+	bool "Force fast charging (AC/USB)"
+	help
+	  A simple sysfs interface to force adapters that
+	  are detected as USB to charge as AC (1A/h) or to set
+	  custom charging currents for AC and USB.
+
+config HAS_MACH_MEMUTILS
+	bool "Motorola MSM memcpy enhancements"
+	depends on ARCH_MSM8974
+	help
+	  Faster memcpy performance for MSM8974.
 
 endif

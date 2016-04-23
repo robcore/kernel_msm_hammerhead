@@ -346,6 +346,7 @@ static inline unsigned int cpufreq_quick_get_max(unsigned int cpu)
 }
 #endif
 
+#define CPU_FREQ_MAX_DEFAULT 2265600
 
 /*********************************************************************
  *                       CPUFREQ DEFAULT GOVERNOR                    *
