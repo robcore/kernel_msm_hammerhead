@@ -938,7 +938,7 @@ static void __init bus_init(const struct l2_level *l2_level)
 }
 
 /* CPU Voltage Interface */
-#define MAX_VDD 1200
+#define MAX_VDD 1150
 #define MIN_VDD 500
 ssize_t acpuclk_get_vdd_levels_str(char *buf)
 {
